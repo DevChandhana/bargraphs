@@ -22,6 +22,7 @@ const App = () => {
     .domain([0, d3.max(data, (d) => d.value)])
     .range([0, innerwidth]);
 
+  const [hoveredVal, setHoveredVal] = React.useState();
   return (
     <div>
       <svg width={width} height={height}>
@@ -52,13 +53,28 @@ const App = () => {
             </g>
           ))}
           {data.map((item) => (
-            <rect
-              x={0}
-              y={yScale(item.date)}
-              width={xScale(item.value)}
-              height={yScale.bandwidth()}
-              className="mark"
-            />
+            <>
+              <rect
+                x={0}
+                y={yScale(item.date)}
+                width={xScale(item.value)}
+                height={yScale.bandwidth()}
+                className="mark"
+                rx={2.5}
+                onMouseOver={() => setHoveredVal(item.value)}
+                onMouseLeave={() => setHoveredVal("")}
+              ></rect>
+              {item.value === hoveredVal && (
+                <text
+                  x={xScale(item.value)}
+                  y={yScale(item.date)}
+                  fontSize={8}
+                  stroke="purple"
+                >
+                  {hoveredVal}
+                </text>
+              )}
+            </>
           ))}
         </g>
       </svg>
