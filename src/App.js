@@ -2,13 +2,18 @@ import React from "react";
 import * as d3 from "d3";
 import { data } from "./utils";
 import "./App.css";
-const width = 950;
+const width = 900;
 const height = 1000;
 const margin = { top: 200, right: 20, bottom: 20, left: 20 };
 
 const App = () => {
   const innerheight = height - margin.top - margin.bottom;
   const innerwidth = width - margin.left - margin.right;
+  // state to hold zoom cordinates
+  const [currentZoomCordinates, setCurrentZoomCordinates] = React.useState();
+  // ref for svg
+  const svgRef = React.useRef();
+  const svg = d3.select(svgRef.current);
 
   const yScale = d3
     .scaleBand()
@@ -22,10 +27,28 @@ const App = () => {
     .domain([0, d3.max(data, (d) => d.value)])
     .range([0, innerwidth]);
 
+  if (currentZoomCordinates) {
+    const newXScale = currentZoomCordinates.rescaleX(xScale);
+    xScale.domain(newXScale.domain());
+  }
+  // zoom
+  const zoomBehavior = d3
+    .zoom()
+    .scaleExtent([0.5, 5])
+    .translateExtent([
+      [-100, 0],
+      [innerwidth + 100, innerheight],
+    ])
+    .on("zoom", () => {
+      const zoomState = d3.zoomTransform(svg.node());
+      setCurrentZoomCordinates(zoomState);
+      console.log(zoomState);
+    });
+  svg.call(zoomBehavior);
   const [hoveredVal, setHoveredVal] = React.useState();
   return (
     <div>
-      <svg width={width} height={height}>
+      <svg width={width} height={height} ref={svgRef}>
         <g transform={`translate(${margin.top}, ${margin.left})`}>
           {/* ticks */}
 
@@ -61,17 +84,19 @@ const App = () => {
                 height={yScale.bandwidth()}
                 className="mark"
                 rx={2.5}
-                onMouseOver={() => setHoveredVal(item.value)}
+                onMouseOver={() => setHoveredVal(item.date)}
                 onMouseLeave={() => setHoveredVal("")}
               ></rect>
-              {item.value === hoveredVal && (
+              {item.date === hoveredVal && (
                 <text
                   x={xScale(item.value)}
                   y={yScale(item.date)}
                   fontSize={8}
                   stroke="purple"
+                  className="tooltip"
+                  dy={5}
                 >
-                  {hoveredVal}
+                  {item.value}
                 </text>
               )}
             </>
